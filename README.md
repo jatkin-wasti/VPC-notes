@@ -75,7 +75,10 @@ we do want it to be able to go to the internet to do updates and get software
 etc (out), to be able to receive requests from the public subnet to mongod port,
 allow ephemeral ports to respond to db requests, and allow ephemeral in from
 public subnet
-
+- Set up inbound rule for port 27017 from the public subnet IP, and ephemeral
+ports also from the public subnet IP
+- Set up outbound rules to allow port 80 and 443 for everyone, as well as the
+ephemeral ports (1024-65535) for the public subnets IP
 
 ## Creating EC2 instances in our Subnets
 - Create an instance like normal
