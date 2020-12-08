@@ -1,6 +1,7 @@
 # VPC's
 ## What is a VPC
-
+- Virtual Private Cloud
+- Virtual network that can be scaled similarly to other AWS features
 ## Setting up a VPC in AWS
 ### Creating the VPC
 - Click on the "Services" dropdown in the top left of the UI
@@ -13,6 +14,7 @@ must be set to 0 e.g. if you use /16 then the last two octets should be 0
 - Make sure the "No IPv6 CIDR block" is selected and that "Tenancy" is Default
 - Click "Create VPC" at the bottom of the page
 ### Creating the IGW
+- Gateway that we attach to our VPC to interface with the wider internet
 - On the left hand menu click on "Internet Gateways"
 - Click the orange "Create Internet gateway" button in the top right to create
 our gateway
@@ -22,6 +24,8 @@ our gateway
 - Now click on the "Actions" dropdown and click "Attach to VPC"
 - Find the VPC we just made and click "Connect"
 ### Creating a Subnet
+- A subnet is a smaller section of the overall network, consisting of a range
+of IP addresses in your VPC
 - On the left hand menu click on "Subnets"
 - Click the orange "Create Subnet" button in the top right to create our subnet
 - Give it an appropriate name following your company/team's naming convention
@@ -32,11 +36,13 @@ section (the 0's) to whatever you want. For now we'll just set it up as 1.0
 follow the same steps before clicking the orange "Create" button in the bottom
 right
 ### Setting up a Route table
+- Set of rules used to direct network trafic
 - Click on the route table in your VPC details and edit the route table's name
 - Click the blue "Create route table" button in the top left
 - Give it an appropriate name following your company/team's naming convention
 - Find your VPC and select it
 - Click the blue "Create" button in the bottom right
+- We can then edit the associated subnet and routes for our IP to the IGW
 
 ### Setting up NACL
 - On the left hand menu click on "Network ACL's"
@@ -69,3 +75,28 @@ we do want it to be able to go to the internet to do updates and get software
 etc (out), to be able to receive requests from the public subnet to mongod port,
 allow ephemeral ports to respond to db requests, and allow ephemeral in from
 public subnet
+
+
+## Creating EC2 instances in our Subnets
+- Create an instance like normal
+- In "Configuring Instance Details" choose the network we've created and the
+desired subnet, enable auto assigning ips and continue
+- In "Configuring Security Group" create a new security group as our previous
+groups are contained only within their vpc's
+
+## Getting the nodejs app working
+### App
+- Copy over the files to the EC2 instance
+- SSH into the VM
+- Run through the provision file manually but replace the `sudo apt-get install python-software-properties -y`
+command with `sudo apt-get install software-properties-common`
+- If the next curl command hangs, add an outbound https rule in our public nacl
+- Run the curl command again
+- Do everything else as usual and the app should be running on port 80!
+### DB
+- Set up new EC2 instance as before but with the subnetwork as private
+- Edit the private route table to allow a route from your IP to the Internet
+Gateway that we set up earlier, we'll also have to open it up to 0.0.0.0/0 for
+the provisioning script to work since apt uses https and we need to accept this
+traffic
+- SSH into the instance and run through provision file for the db
