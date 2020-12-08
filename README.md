@@ -45,7 +45,11 @@ right
 - We can then edit the associated subnet and routes for our IP to the IGW
 - The finalised route tables for our private and public subnets should look like
  the images below
+- Private route:
+
 ![Private Route](/images/route_table_private.PNG)
+- Public Route:
+
 ![Public Route](/images/route_table_public.PNG)
 
 ### Setting up NACL
@@ -71,11 +75,13 @@ receive communication back from certain services. This makes the port 3000 rule
 unnecessary so we can delete that rule now
 - Save these changes with the blue "Save" button in the bottom right
 - The finalised setup for the inbound rules should look like the image below
+
 ![Pub in](/images/Public_NACL_inbound.PNG)
 - Now we'll edit the outbound rules for port 80, ssh on port 22, and ephemeral
 ports (1024-65535) from all IP's, as well as sending requests to the private
 subnet on the mongod port 20717 for the private subnets IP
 - The finalised setup for outbound rules should look like the image below
+
 ![Pub out](/images/Public_NACL_outbound.PNG)
 
 #### Private NACL
@@ -87,10 +93,12 @@ public subnet
 - Set up inbound rule for port 27017 from the public subnet IP, and ephemeral
 ports also from the public subnet IP
 - The finalised setup for inbound rules should look like the image below
+
 ![Private NACL](/images/Private_NACL_inbound.PNG)
 - Set up outbound rules to allow port 80 and 443 for everyone, as well as the
 ephemeral ports (1024-65535) for the public subnets IP
 - The finalised setup for outbound rules should look like the image below
+
 ![Private NACL](/images/Private_NACL_outbound.PNG)
 
 ## Creating EC2 instances in our Subnets
@@ -151,5 +159,5 @@ the provisioning script to work since apt uses https and we need to accept this
 traffic
 - SSH into the instance and run through provision file for the db
 ### DB with Bastion
-- Follow the steps from the above section but ssh into the instance from within 
+- Follow the steps from the above section but ssh into the instance from within
 the Bastion instance
