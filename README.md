@@ -43,6 +43,10 @@ right
 - Find your VPC and select it
 - Click the blue "Create" button in the bottom right
 - We can then edit the associated subnet and routes for our IP to the IGW
+- The finalised route tables for our private and public subnets should look like
+ the images below
+![Private Route](/images/route_table_private.PNG)
+![Public Route](/images/route_table_public.PNG)
 
 ### Setting up NACL
 - On the left hand menu click on "Network ACL's"
@@ -66,9 +70,14 @@ gives flexibility for adding future rules)
 receive communication back from certain services. This makes the port 3000 rule
 unnecessary so we can delete that rule now
 - Save these changes with the blue "Save" button in the bottom right
+- The finalised setup for the inbound rules should look like the image below
+![Pub in](/images/Public_NACL_inbound.PNG)
 - Now we'll edit the outbound rules for port 80, ssh on port 22, and ephemeral
 ports (1024-65535) from all IP's, as well as sending requests to the private
 subnet on the mongod port 20717 for the private subnets IP
+- The finalised setup for outbound rules should look like the image below
+![Pub out](/images/Public_NACL_outbound.PNG)
+
 #### Private NACL
 - This needs to hold our DB, we DON'T want it to have internet access (in) but
 we do want it to be able to go to the internet to do updates and get software
@@ -77,8 +86,12 @@ allow ephemeral ports to respond to db requests, and allow ephemeral in from
 public subnet
 - Set up inbound rule for port 27017 from the public subnet IP, and ephemeral
 ports also from the public subnet IP
+- The finalised setup for inbound rules should look like the image below
+![Private NACL](/images/Private_NACL_inbound.PNG)
 - Set up outbound rules to allow port 80 and 443 for everyone, as well as the
 ephemeral ports (1024-65535) for the public subnets IP
+- The finalised setup for outbound rules should look like the image below
+![Private NACL](/images/Private_NACL_outbound.PNG)
 
 ## Creating EC2 instances in our Subnets
 - Create an instance like normal
@@ -86,6 +99,30 @@ ephemeral ports (1024-65535) for the public subnets IP
 desired subnet, enable auto assigning ips and continue
 - In "Configuring Security Group" create a new security group as our previous
 groups are contained only within their vpc's
+- The finalised Security Groups should look like the images below
+- App instance:
+
+![App SG](/images/App_SG.PNG)
+- DB instance:
+
+![DB SG](/images/DB_SG.PNG)
+
+## Using a Bastion for better Security
+- A bastion acts as an additional security measure to make sure our private
+networks are as secure as possible
+- Allowing someone to ssh into an instance on our private subnet from the public
+subnet is not ideal as the public subnet is open to the internet
+- Creating a very secure bastion that is very restrictive about what it lets in
+and out can be used to access the private subnet and maintain good security
+practises
+- The Bastion will be its own EC2 instance in our public subnet that we will set
+up to only allow an ssh from our IP in its own SG
+- We'll then edit the SG for the DB instance to only allow ssh access from
+the IP of the Bastion instance
+- The security group for the Bastion instance should look like this:
+
+![Bastion SG](/images/Bastion_SG.PNG)
+
 
 ## Getting the nodejs app working
 ### App
@@ -96,10 +133,23 @@ command with `sudo apt-get install software-properties-common`
 - If the next curl command hangs, add an outbound https rule in our public nacl
 - Run the curl command again
 - Do everything else as usual and the app should be running on port 80!
-### DB
+#### Fixing the posts page
+- Run `systemctl status nginx` and see if nginx.service: Failed to parse
+- If it did we'll need to run through the following steps
+- Create a config file for nginx to read with `printf "[Service]\nExecStartPost=/bin/sleep 0.1\n" > override.conf`
+- Make a directory for it go copied into `sudo mkdir /etc/systemd/system/nginx.service.d`
+- Copy over the file to this new directory `sudo cp override.conf /etc/systemd/system/nginx.service.d/override.conf`
+- Reload the daemon `sudo systemctl daemon-reload`
+- Stop and start nginx with `sudo systemctl stop nginx` and `sudo systemctl start nginx`
+- Start the app with pm2 and posts should work (it still won't work with npm
+for some reason but pm2 should suffice)
+### DB without Bastion
 - Set up new EC2 instance as before but with the subnetwork as private
 - Edit the private route table to allow a route from your IP to the Internet
 Gateway that we set up earlier, we'll also have to open it up to 0.0.0.0/0 for
 the provisioning script to work since apt uses https and we need to accept this
 traffic
 - SSH into the instance and run through provision file for the db
+### DB with Bastion
+- Follow the steps from the above section but ssh into the instance from within 
+the Bastion instance
